@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Media;
+using System.IO;
 
 namespace SnakeGame
 {
@@ -22,7 +24,7 @@ namespace SnakeGame
             InitializeComponent();
             this.Text = "Cal's Snake Gaem";
             this.DoubleBuffered = true;
-            this.ClientSize = new Size(400, 400);
+            this.ClientSize = new Size(600, 600); // 50% bigger than 400x400
             UpdateCellSize();
             StartGame();
 
@@ -85,6 +87,17 @@ namespace SnakeGame
                     return;
                 }
                 SpawnFood();
+
+                // Play blip sound
+                try
+                {
+                    var soundPath = Path.Combine(Application.StartupPath, "assets", "Blip.wav");
+                    using (var player = new SoundPlayer(soundPath))
+                    {
+                        player.Play();
+                    }
+                }
+                catch { }
             }
             else
             {
@@ -139,6 +152,52 @@ namespace SnakeGame
             }
 
             e.Graphics.FillRectangle(Brushes.Red, food.X * cellSize, food.Y * cellSize, cellSize, cellSize);
+
+            // Calculate head position in pixels
+            Point head = snake[0];
+            int headX = head.X * cellSize;
+            int headY = head.Y * cellSize;
+
+            // Eye and pupil sizes
+            int eyeRadius = cellSize / 3;
+            int pupilRadius = cellSize / 5;
+            int offset = cellSize / 7;
+
+            // Eye positions (left and right)
+            Point eye1 = new Point(headX + offset, headY + offset);
+            Point eye2 = new Point(headX + cellSize - offset - eyeRadius, headY + offset);
+
+            // Draw white eyes
+            e.Graphics.FillEllipse(Brushes.White, eye1.X, eye1.Y, eyeRadius, eyeRadius);
+            e.Graphics.FillEllipse(Brushes.White, eye2.X, eye2.Y, eyeRadius, eyeRadius);
+
+            // Calculate direction from head center to food center
+            float headCenterX = headX + cellSize / 2f;
+            float headCenterY = headY + cellSize / 2f;
+            float foodCenterX = food.X * cellSize + cellSize / 2f;
+            float foodCenterY = food.Y * cellSize + cellSize / 2f;
+
+            float dx = foodCenterX - headCenterX;
+            float dy = foodCenterY - headCenterY;
+            float length = (float)Math.Sqrt(dx * dx + dy * dy);
+            float normDx = 0, normDy = 1; // default: look down
+            if (length > 0.01f)
+            {
+                normDx = dx / length;
+                normDy = dy / length;
+            }
+
+            // How far the pupil can move from the center of the eye
+            float pupilMove = eyeRadius / 3f;
+
+            // Draw pupils in the direction of the food
+            float pupil1X = eye1.X + eyeRadius / 2f + normDx * pupilMove - pupilRadius / 2f;
+            float pupil1Y = eye1.Y + eyeRadius / 2f + normDy * pupilMove - pupilRadius / 2f;
+            float pupil2X = eye2.X + eyeRadius / 2f + normDx * pupilMove - pupilRadius / 2f;
+            float pupil2Y = eye2.Y + eyeRadius / 2f + normDy * pupilMove - pupilRadius / 2f;
+
+            e.Graphics.FillEllipse(Brushes.Black, pupil1X, pupil1Y, pupilRadius, pupilRadius);
+            e.Graphics.FillEllipse(Brushes.Black, pupil2X, pupil2Y, pupilRadius, pupilRadius);
         }
     }
 }
