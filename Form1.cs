@@ -24,7 +24,7 @@ namespace SnakeGame
             InitializeComponent();
             this.Text = "Cal's Snake Gaem";
             this.DoubleBuffered = true;
-            this.ClientSize = new Size(600, 600); // 50% bigger than 400x400
+            this.ClientSize = new Size(600, 600);
             UpdateCellSize();
             StartGame();
 
